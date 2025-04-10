@@ -15,14 +15,35 @@ import httpserver.itf.HttpSession;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 public class HttpRicmletRequestImpl extends HttpRicmletRequest {
 
 	private Map<String, String> m_args = new HashMap<>();
+	private Map<String, String> m_cookies = new HashMap<>();
+
+	public Map<String, String> getM_cookies() {
+		return m_cookies;
+	}
 
 	public HttpRicmletRequestImpl(HttpServer hs, String method, String ressname, BufferedReader br) throws IOException {
 		super(hs, method, ressname, br);
 		parseArguments();
+
+		String line;
+		while ((line = br.readLine()) != null && !line.isEmpty()) {
+			if (line.startsWith("Cookie: ")) {
+				String cookiesLine = line.substring("Cookie: ".length());
+				String[] cookies = cookiesLine.split(";");
+				for (String cookie : cookies) {
+					String[] kv = cookie.trim().split("=");
+					if (kv.length == 2) {
+						m_cookies.put(kv[0], kv[1]);
+					}
+				}
+			}
+		}
+
 	}
 
 	private void parseArguments() {
@@ -53,8 +74,7 @@ public class HttpRicmletRequestImpl extends HttpRicmletRequest {
 
 	@Override
 	public String getCookie(String name) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cookies.get(name);
 	}
 
 	@Override

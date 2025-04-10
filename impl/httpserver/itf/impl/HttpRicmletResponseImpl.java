@@ -3,6 +3,8 @@ package httpserver.itf.impl;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import httpserver.itf.HttpRequest;
 import httpserver.itf.HttpRicmletResponse;
@@ -12,6 +14,8 @@ public class HttpRicmletResponseImpl implements HttpRicmletResponse {
 	protected HttpServer m_hs;
 	protected PrintStream m_ps;
 	protected HttpRequest m_req;
+
+	private Map<String, String> m_responseCookies = new HashMap<>();
 
 	protected HttpRicmletResponseImpl(HttpServer hs, HttpRequest req, PrintStream ps) {
 		m_hs = hs;
@@ -25,6 +29,10 @@ public class HttpRicmletResponseImpl implements HttpRicmletResponse {
 		m_ps.println("Date: " + new Date());
 		m_ps.println("Server: ricm-http 1.0");
 		
+		// Écriture des cookies
+		for (Map.Entry<String, String> entry : m_responseCookies.entrySet()) {
+			m_ps.println("Set-Cookie: " + entry.getKey() + "=" + entry.getValue());
+		}
 	}
 
 	@Override
@@ -60,8 +68,17 @@ public class HttpRicmletResponseImpl implements HttpRicmletResponse {
 
 	@Override
 	public void setCookie(String name, String value) {
-		// TODO Auto-generated method stub
-		
+		// if(m_req instanceof HttpRicmletRequestImpl) {
+		// 	Map <String, String> cookies = ((HttpRicmletRequestImpl)m_req).getM_cookies();
+		// 	if(!cookies.containsKey(name)) {
+		// 		cookies.put(name, value);
+		// 	} else {
+		// 		cookies.replace(name, value);
+		// 	}
+		// }
+		//m_ps.println("Set-Cookie:" + name + "=" + value);		
+
+		m_responseCookies.put(name, value);
 	}
 
 }
