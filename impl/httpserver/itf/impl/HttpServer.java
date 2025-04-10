@@ -7,17 +7,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import httpserver.itf.HttpRequest;
 import httpserver.itf.HttpResponse;
 import httpserver.itf.HttpRicmlet;
-
+import httpserver.itf.HttpRicmletRequest;
 
 /**
  * Basic HTTP Server Implementation 
  * 
- * Only manages static requests
+ * Only manages static requestss
  * The url for a static ressource is of the form: "http//host:port/<path>/<ressource name>"
  * For example, try accessing the following urls from your brower:
  *    http://localhost:<port>/
@@ -29,6 +31,8 @@ public class HttpServer {
 	private int m_port;
 	private File m_folder;  // default folder for accessing static resources (files)
 	private ServerSocket m_ssoc;
+	
+	private Map<String, HttpRicmlet> ricmletInstances = new ConcurrentHashMap<>();
 
 	protected HttpServer(int port, String folderName) {
 		m_port = port;
@@ -53,10 +57,18 @@ public class HttpServer {
 	public HttpRicmlet getInstance(String clsname)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, MalformedURLException, 
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		throw new Error("No Support for Ricmlets");
+		
+		if(ricmletInstances.containsKey(clsname) ) {
+			return ricmletInstances.get(clsname);
+		}
+		
+		Class<?> c = Class.forName(clsname);
+		httpserver.itf.HttpRicmlet ricmlet = (httpserver.itf.HttpRicmlet) c.getDeclaredConstructor().newInstance();
+		ricmletInstances.put(clsname, ricmlet);
+		
+		return ricmlet;
+		
 	}
-
-
 
 
 	/*
@@ -69,10 +81,16 @@ public class HttpServer {
 		StringTokenizer parseline = new StringTokenizer(startline);
 		String method = parseline.nextToken().toUpperCase(); 
 		String ressname = parseline.nextToken();
+		
 		if (method.equals("GET")) {
-			request = new HttpStaticRequest(this, method, ressname);
+			if(ressname.contains("ricmlets")) {
+				request = new HttpRicmletRequestImpl(this, method, ressname, br);
+			} else {
+				request = new HttpStaticRequest(this, method, ressname);
+			}
 		} else 
 			request = new UnknownRequest(this, method, ressname);
+		
 		return request;
 	}
 
@@ -81,10 +99,15 @@ public class HttpServer {
 	 * Returns an HttpResponse object associated to the given HttpRequest object
 	 */
 	public HttpResponse getResponse(HttpRequest req, PrintStream ps) {
-		return new HttpResponseImpl(this, req, ps);
+		if(req instanceof HttpRicmletRequest) {
+			return new HttpRicmletResponseImpl(this, req, ps);
+		} else {
+			return new HttpResponseImpl(this, req, ps);
+		}
 	}
+	
 
-
+	
 	/*
 	 * Server main loop
 	 */

@@ -33,13 +33,15 @@ public class HttpWorker extends Thread {
 			
 			// process the HTTP request
 			 //HttpStaticRequest srequest = new HttpStaticRequest(m_hs, "GET", "response");
-			if(req instanceof HttpStaticRequest) {
-				HttpStaticRequest srequest = (HttpStaticRequest) req;
-				 srequest.process(resp);
-			}
+			// if(req instanceof HttpStaticRequest) {
+			// 	HttpStaticRequest srequest = (HttpStaticRequest) req;
+			// 	 srequest.process(resp);
+			// } else if (req instanceof HttpRicmletRequestImpl) {
+			// 	HttpRicmletRequestImpl drequest = (HttpRicmletRequestImpl) req;
+			// }
 			
 			 
-			//req.process(resp);
+			req.process(resp);
 		} catch (Exception e) {
 			System.err.println("Server exception, skipping to next request " + e);		
 		} finally {
